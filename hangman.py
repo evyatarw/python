@@ -1,5 +1,18 @@
+# colors for printing
+RED = '\x1b[5;31;40m'
+PINK = '\x1b[1;31;40m'
+PURPLE = '\x1b[0;35;40m'
+GREEN = '\x1b[1;32;40m'
+GREY = '\x1b[1;30;40m'
+BLAK = '\x1b[0;30;40m'
+LINEN = '\x1b[4;37;40m'
+GREEN_MARK = '\x1b[0;30;42m'
+RED_MARK = '\x1b[0;30;41m'
+WHITE_MARK = '\x1b[0;30;47m'
+GREY_ON_WHITE = '\x1b[1;30;47m'
+END_CLR = '\x1b[0m'
 
-# welcom message
+# ascii art picturs
 HANGMAN_ASCII_ART = """
 """ + PURPLE + """  _    _                                         
  | |  | |                                        
@@ -55,18 +68,6 @@ MODE_6 = """x-------x
 """
 HANGMAN_PHOTOS = {0: MODE_0, 1: MODE_1, 2: MODE_2, 3: MODE_3, 4: MODE_4
     , 5: MODE_5, 6: MODE_6}
-RED = '\x1b[5;31;40m'
-PINK = '\x1b[1;31;40m'
-PURPLE = '\x1b[0;35;40m'
-GREEN = '\x1b[1;32;40m'
-GREY = '\x1b[1;30;40m'
-BLAK = '\x1b[0;30;40m'
-LINEN = '\x1b[4;37;40m'
-GREEN_MARK = '\x1b[0;30;42m'
-RED_MARK = '\x1b[0;30;41m'
-WHITE_MARK = '\x1b[0;30;47m'
-GREY_ON_WHITE = '\x1b[1;30;47m'
-END_CLR = '\x1b[0m'
 
 # define maximum tries
 MAX_TRIES = 6

@@ -60,9 +60,12 @@ PINK = '\x1b[1;31;40m'
 PURPLE = '\x1b[0;35;40m'
 GREEN = '\x1b[1;32;40m'
 GREY = '\x1b[1;30;40m'
+BLAK = '\x1b[0;30;40m'
 LINEN = '\x1b[4;37;40m'
 GREEN_MARK = '\x1b[0;30;42m'
 RED_MARK = '\x1b[0;30;41m'
+WHITE_MARK = '\x1b[0;30;47m'
+GREY_ON_WHITE = '\x1b[1;30;47m'
 END_CLR = '\x1b[0m'
 
 # define maximum tries
@@ -96,11 +99,11 @@ def print_sad_smiley():
     cry_mouth = RED + "   \  '------'  /   " + END_CLR
     print(sad_face)
     time.sleep(0.2)
-    for i in [1, 2, 3]:
+    for i in [1, 2]:
         print('\r' + cry_mouth, end='')
-        time.sleep(0.4)
+        time.sleep(0.2)
         print("\r                ", end='')
-        time.sleep(0.4)
+        time.sleep(0.2)
     screen_clear()
 
 def print_happy_smiley():
@@ -149,8 +152,8 @@ def check_valid_input(letter_guessed, old_letters_guessed):
     :type old_letters_guessed: list
     :rtype: bool
     """
-    return (len(letter_guessed) == 1) and (letter_guessed.isalpha())
-        and not(letter_guessed.lower() in old_letters_guessed)
+    return ((len(letter_guessed) == 1) and (letter_guessed.lower() != letter_guessed.upper())
+        and not(letter_guessed.lower() in old_letters_guessed))
 
 def try_update_letter_guessed(letter_guessed, old_letters_guessed):
     """
@@ -198,18 +201,27 @@ def get_guess(num_of_tries, secret_word, old_letters_guessed):
     :type old_letters_guessed: list
     :rtype: tuple
     """
-    print_slow("Guess a letter:  ", 0, 0)
-    letter_guessed = input()
+    import msvcrt
+    print_slow("Guess a letter:  ")
+    print_slow(show_hidden_word(secret_word, old_letters_guessed), 0, 1, 0.01)
+    letter_guessed = str(msvcrt.getch())[2].lower()
     if try_update_letter_guessed(letter_guessed, old_letters_guessed):
-        old_letters_guessed += [letter_guessed]
+        if not letter_guessed in old_letters_guessed:
+            old_letters_guessed += [letter_guessed]
+        else:
+            print(RED + "X" + END_CLR)
+            print_slow((GREY + " -> " + END_CLR).join(sorted(old_letters_guessed))
+                , 0, 1, 0.008)
         if not letter_guessed in secret_word:
             num_of_tries += 1
             print_sad_smiley()
-            print(HANGMAN_PHOTOS[num_of_tries])
         else:
             print_happy_smiley()
-            print(HANGMAN_PHOTOS[num_of_tries])
-        print_slow('\n' + show_hidden_word(secret_word, old_letters_guessed), 0, 1, 0.01)
+        print(WHITE_MARK + "letters guessed: ",
+            (GREY_ON_WHITE + " -> " + WHITE_MARK).join(sorted(old_letters_guessed))
+            + END_CLR + '\n')
+        print(HANGMAN_PHOTOS[num_of_tries])
+        print(GREY + "Tries left:  " + str(MAX_TRIES - num_of_tries) + END_CLR + '\n')
     return (num_of_tries, old_letters_guessed)
 
 def check_win(secret_word, old_letters_guessed):
@@ -225,7 +237,7 @@ def check_win(secret_word, old_letters_guessed):
         if char not in old_letters_guessed:
             if char != ' ': return False
     return True
-    
+
 def create_defult_list_of_words():
     return ["python", "programming", "game", "bug"
         , "you win", "great job", "find me", "brilliant"]
@@ -310,7 +322,9 @@ def finish_peinting(num_of_tries, secret_word, old_letters_guessed):
     :type index: int
     :rtype: tuple
     """
+    import time
     if check_win(secret_word, old_letters_guessed):
+        print(show_hidden_word(secret_word, list(secret_word)))
         if num_of_tries == 0:
             print(GREEN + """
 ░█████╗░███╗░░░███╗░█████╗░███████╗██╗███╗░░██╗░██████╗░██╗
@@ -369,6 +383,10 @@ def finish_peinting(num_of_tries, secret_word, old_letters_guessed):
 █─▄▄▄▄█─▄▄─███─▄▄▄─█▄─▄███─▄▄─█─▄▄▄▄█▄─▄▄─███████
 █▄▄▄▄─█─██─███─███▀██─██▀█─██─█▄▄▄▄─██─▄█▀███████
 █▄▄▄▄▄█▄▄▄▄███▄▄▄▄▄█▄▄▄▄▄█▄▄▄▄█▄▄▄▄▄█▄▄▄▄▄█▄█▄█▄█""" + END_CLR)
+        print_slow(GREY + "The word was  " + END_CLR, 0, 0, 0.03)
+        print_slow(show_hidden_word(secret_word, list(secret_word)), 0.5, 1, 0.1)
+    time.sleep(1.1)
+
 
 def main():
     screen_clear()
@@ -388,16 +406,21 @@ def main():
         secret_word = choose_word('_n', random.randint(1, 100))
     
     # start the game
-    screen_clear()
-    old_letters_guessed = []
-    num_of_tries = 0
-    print('\n' + HANGMAN_PHOTOS[num_of_tries])
-    print_slow(show_hidden_word(secret_word, []))
-    while ((not check_win(secret_word, old_letters_guessed)) and (num_of_tries != MAX_TRIES)):
-        num_of_tries, old_letters_guessed = get_guess(num_of_tries, secret_word, old_letters_guessed)
-    
-    # end the game
-    finish_peinting(num_of_tries, secret_word, old_letters_guessed)
+    want_to_play = True
+    while want_to_play:
+        screen_clear()
+        old_letters_guessed = []
+        num_of_tries = 0
+        print('\n' + HANGMAN_PHOTOS[num_of_tries])
+        while ((not check_win(secret_word, old_letters_guessed)) and (num_of_tries != MAX_TRIES)):
+            num_of_tries, old_letters_guessed = get_guess(num_of_tries, secret_word, old_letters_guessed)
+        
+        # end the game
+        finish_peinting(num_of_tries, secret_word, old_letters_guessed)
+        print_slow("\nDo you want to get another word?  ", 0, 0)
+        if input() in ["yes", "Yes", "YES", "y", "Y"]:
+            secret_word = choose_word('_n', random.randint(1, 100))
+        else: want_to_play = False
 
 if __name__ == "__main__":
     main()

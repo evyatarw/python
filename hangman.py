@@ -23,6 +23,11 @@ HANGMAN_ASCII_ART = """
                       __/ |                      
                      |___/""" + END_CLR
 MODE_0 = """x-------x
+
+
+
+
+
 """
 MODE_1 = """x-------x
 |
@@ -87,49 +92,7 @@ def print_slow(string, hold=0, enter=1, bit=0.03):
     if enter: print('')
     time.sleep(hold)
 
-def print_sad_smiley():
-    import time
-    screen_clear()
-    sad_face = RED + """
-     .-''''''-.
-   .'          '.
-  /   O      O   \ 
- :           `    :
- :    .------.    :
-  \  '        '  / """ + END_CLR
-    cry_mouth = RED + "   \  '------'  /   " + END_CLR
-    print(sad_face)
-    time.sleep(0.2)
-    for i in [1, 2]:
-        print('\r' + cry_mouth, end='')
-        time.sleep(0.2)
-        print("\r                ", end='')
-        time.sleep(0.2)
-    screen_clear()
-
-def print_happy_smiley():
-    import time
-    screen_clear()
-    print(GREEN + """
-
-      _.-'''''-._
-    .'  _     _  '.
-   /   (_)   (_)   \ 
-  :  ,           ,  :
-  :  \`.       .`/  :
-   \  '.`'""'"`.'  / 
-    '.  `'---'`  .'
-      '-._____.-' """ + END_CLR)
-    time.sleep(0.5)
-    screen_clear()
-
-def print_welcom_message():
-    print_slow("Welcome to the game Hangman", 0.2)
-    print(HANGMAN_ASCII_ART + "\n" + GREY + 'Max Tries = ' + str(MAX_TRIES) + END_CLR + '\n')
-    from time import sleep
-    sleep(2)
-
-def screen_clear(sec=0):
+def clear_screen(sec=0):
     """
     hold a few seconds and clear the screen
     :param sec: seconds to hold
@@ -144,9 +107,70 @@ def screen_clear(sec=0):
     else:                   # for windows platfrom
         _ = os.system('cls')
 
+def print_sad_smiley():
+    """
+    print sad smiley
+    :rtype: None
+    """
+    import time
+    clear_screen()
+    sad_face = RED + """
+     .-''''''-.
+   .'          '.
+  /   O      O   \ 
+ :           `    :
+ :    .------.    :
+  \  '        '  / 
+   '-.________.-' """ + END_CLR
+    cry_mouth = RED + "   \  '------'  /   " + END_CLR
+    print(sad_face, end='')
+    time.sleep(0.2)
+    # animation
+    for i in [1, 2]:
+        print('\r' + cry_mouth, end='')
+        time.sleep(0.2)
+        print(RED + "\r   '-.________.-' " + END_CLR, end='')
+        time.sleep(0.2)
+    clear_screen()
+
+def print_happy_smiley():
+    """
+    print happy smiley
+    :rtype: None
+    """
+    import time
+    clear_screen()
+    print(GREEN + """
+
+      _.-'''''-._
+    .'  _     _  '.
+   /   (_)   (_)   \ 
+  :  ,           ,  :
+  :  \`.       .`/  :
+   \  '.`'""'"`.'  / 
+    '.  `'---'`  .'
+      '-._____.-' """ + END_CLR)
+    time.sleep(0.5)
+    clear_screen()
+
+def isnt_char(input_char):
+    if input_char in [b'\xe0', b'\r']:
+        return True
+    return False
+
+def print_welcom_message():
+    """
+    print welcom message
+    :rtype: None
+    """
+    print_slow("Welcome to the game Hangman", 0.2)
+    print(HANGMAN_ASCII_ART + "\n" + GREY + 'Max Tries = ' + str(MAX_TRIES) + END_CLR + '\n')
+    from time import sleep
+    sleep(2)
+
 def check_valid_input(letter_guessed, old_letters_guessed):
     """
-    check if the input is a singel alpha-beta char, and if it a new guess
+    check if the input is a singel english letter, and if it a new guess
     :param letter_guessed: letter checked
     :param old_letters_guessed: letters of old guesses
     :type letter_guessed: str
@@ -166,7 +190,10 @@ def try_update_letter_guessed(letter_guessed, old_letters_guessed):
     :rtype: bool
     """
     if check_valid_input(letter_guessed, old_letters_guessed):
+        old_letters_guessed += letter_guessed
         return True
+    
+    # error message
     print(RED + "X" + END_CLR)
     print_slow((GREY + " -> " + END_CLR).join(sorted(old_letters_guessed))
         , 0, 1, 0.008)
@@ -190,10 +217,12 @@ def show_hidden_word(secret_word, old_letters_guessed):
         else: result += '_ '
     return result[:-1]
 
-def get_guess(num_of_tries, secret_word, old_letters_guessed):
+def get_guess(num_of_tries, secret_word, old_letters_guessed, skeep=False):
     """
-    get letter from the player and if it is a currect letter print the secret word,
-    if the letter not in the secret word print the hangman mode
+    get letter from the player, update the system and print:
+        1. list of old letters guessed
+        2. the hangman mode
+        3. number of tries left
     :param num_of_tries: number of wrong trys
     :param secret_word: the secret word the player should guess
     :param old_letters_guessed: letters of old guesses
@@ -206,18 +235,17 @@ def get_guess(num_of_tries, secret_word, old_letters_guessed):
     print_slow("Guess a letter:  ")
     print_slow(show_hidden_word(secret_word, old_letters_guessed), 0, 1, 0.01)
     letter_guessed = str(msvcrt.getch())[2].lower()
+    # check that the input isn't an arrow or enter
+    if isnt_char(letter_guessed): return get_guess(num_of_tries, secret_word, old_letters_guessed, True)
+    if skeep: return get_guess(num_of_tries, secret_word, old_letters_guessed, False)
+    # update the letter guessed in the system
     if try_update_letter_guessed(letter_guessed, old_letters_guessed):
-        if not letter_guessed in old_letters_guessed:
-            old_letters_guessed += [letter_guessed]
-        else:
-            print(RED + "X" + END_CLR)
-            print_slow((GREY + " -> " + END_CLR).join(sorted(old_letters_guessed))
-                , 0, 1, 0.008)
         if not letter_guessed in secret_word:
             num_of_tries += 1
             print_sad_smiley()
         else:
             print_happy_smiley()
+        # print new screen
         print(WHITE_MARK + "letters guessed: ",
             (GREY_ON_WHITE + " -> " + WHITE_MARK).join(sorted(old_letters_guessed))
             + END_CLR + '\n')
@@ -240,6 +268,10 @@ def check_win(secret_word, old_letters_guessed):
     return True
 
 def create_defult_list_of_words():
+    """
+    create defult list of words
+    :rtype: None
+    """
     return ["python", "programming", "game", "bug"
         , "you win", "great job", "find me", "brilliant"]
 
@@ -252,32 +284,32 @@ def file_to_list_of_words(file_path):
     """
     import os.path
     import sys,time
-    if os.path.isfile(file_path):
+    if os.path.isfile(file_path):   # create a list from the words in the file
         file_of_words = open(file_path, 'r')
         list_of_words = file_of_words.read().split()
         ditincted_list_of_words = []
         for i in range(len(list_of_words)):
             if list_of_words[i] not in ditincted_list_of_words:
                 ditincted_list_of_words += [list_of_words[i]]
-    else: # if The file does not exist
-        print_slow(RED + "\nERROR!\n" + END_CLR
+    else:                           # if the file does not exist
+        print_slow(RED + "\nERROR!\n" + END_CLR     # error message
             + PINK + "The file path is not correct. " + END_CLR
             + "you can get the defult words"
             + ".\nDo you want to enter it again? "
             + GREY + "(press 'yes' or 'no') " + END_CLR, 0, 0)
         enter_again = input()
-        if enter_again == "yes":
+        if enter_again == "yes":    # get the fixed file path
             print_slow("Please enter the "
                 + LINEN + "fixed" + END_CLR + " file path: ", 0, 0)
             file_path = input()
             if os.path.isfile(file_path):
                 list_of_words = file_to_list_of_words(file_path)
-            else:
+            else:                    # craete the defult list of words
                 print_slow(PINK + "\nThe file path is not correct again... " + END_CLR
                     + "So we enter the defult words.\n")
                 time.sleep(1)
                 list_of_words = create_defult_list_of_words()
-        else:
+        else:                        # craete the defult list of words
             print_slow("\nSo we enter the defult words!")
             time.sleep(1)
             list_of_words = create_defult_list_of_words()
@@ -316,12 +348,14 @@ def str_to_num(string):
 
 def finish_peinting(num_of_tries, secret_word, old_letters_guessed):
     """
-    print finish message
-    :param file_path: file adress of words list (spareted by spaces onley)
-    :param index: index of wished word
-    :type file_path: str
-    :type index: int
-    :rtype: tuple
+    print finish message (win or lose)
+    :param num_of_tries: num of wrong tries
+    :param secret_word: the word should be guessed
+    :param old_letters_guessed: old letters guessed
+    :type num_of_tries: int
+    :type secret_word: str
+    :type old_letters_guessed: list
+    :rtype: None
     """
     import time
     if check_win(secret_word, old_letters_guessed):
@@ -390,7 +424,7 @@ def finish_peinting(num_of_tries, secret_word, old_letters_guessed):
 
 
 def main():
-    screen_clear()
+    clear_screen()
     print_welcom_message()
     
     # get the secret word
@@ -409,7 +443,7 @@ def main():
     # start the game
     want_to_play = True
     while want_to_play:
-        screen_clear()
+        clear_screen()
         old_letters_guessed = []
         num_of_tries = 0
         print('\n' + HANGMAN_PHOTOS[num_of_tries])
@@ -417,6 +451,7 @@ def main():
             num_of_tries, old_letters_guessed = get_guess(num_of_tries, secret_word, old_letters_guessed)
         
         # end the game
+    #    print("tries =", num_of_tries, " secret word =", secret_word, " old letters guessed =", old_letters_guessed)
         finish_peinting(num_of_tries, secret_word, old_letters_guessed)
         print_slow("\nDo you want to get another word?  ", 0, 0)
         if input() in ["yes", "Yes", "YES", "y", "Y"]:
